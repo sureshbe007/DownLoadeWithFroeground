@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -42,6 +43,8 @@ public class MainActivity extends BaseActivity implements MainMvp {
             "https://dl.google.com/android/repository/android-ndk-r18b-darwin-x86_64.zip"};
 
     MainPresenter mMainPresenter;
+    private Handler mHandler;
+    public static List<DownloadModel> mDownloadModelList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,8 +52,8 @@ public class MainActivity extends BaseActivity implements MainMvp {
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
         mMainPresenter = new MainPresenter(this);
-//        URL Arraya
         mMainPresenter.getDownloadDetails(BASE_URL);
+        mHandler = new Handler();
         if (isExternalStorageAvailable() && getAvailableInternalMemorySize() > SIZE_ONE_GB) {
             DirectoryManager.createDirectory();
         }
@@ -72,6 +75,7 @@ public class MainActivity extends BaseActivity implements MainMvp {
     public void setAdapter(List<DownloadModel> downloadModelList) {
 
         try {
+            mDownloadModelList = downloadModelList;
             downLoadAdapter = new MainAdapter(MainActivity.this, new DownLoadStatus() {
                 @Override
                 public void sendDownLodStatus(String DownLoadStatus, int filePosition, String fileUrl, DownloadModel downloadModel) {
@@ -124,16 +128,22 @@ public class MainActivity extends BaseActivity implements MainMvp {
             try {
                 //UI update here
                 if (intent != null) {
-                    final int filePosition = intent.getIntExtra("FILE_POSITION", -1);
+                    final int position = intent.getIntExtra("FILE_POSITION", -1);
                     final DownloadModel downloadModel = (DownloadModel) intent.getSerializableExtra("FILE_MODEL");
-                    if (filePosition != -1) {
-                        MainActivity.this.runOnUiThread(new Runnable() {
+                    if (position != -1) {
+//                                downLoadAdapter.setData(filePosition, downloadModel);
+//                                downLoadAdapter.notifyItemChanged(filePosition);
+                        mHandler.post(new Runnable() {
                             @Override
                             public void run() {
-                                downLoadAdapter.setData(filePosition, downloadModel);
-                                downLoadAdapter.notifyItemChanged(filePosition);
+//                                mTextView.setText("" + downloadModel.getDownloadedBytes());
+                                mDownloadModelList.set(position,downloadModel);
+                                downLoadAdapter.notifyItemChanged(position, downloadModel);
                             }
                         });
+
+
+//
                     }
                 }
             } catch (Exception ex) {

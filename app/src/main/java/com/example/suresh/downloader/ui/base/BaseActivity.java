@@ -15,6 +15,7 @@ import com.example.suresh.downloader.R;
 public class BaseActivity extends AppCompatActivity {
 
     private static final int REQUEST_INTERNET = 200;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -32,7 +33,7 @@ public class BaseActivity extends AppCompatActivity {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 //start audio recording or whatever you planned to do
 
-            }else if (grantResults[0] == PackageManager.PERMISSION_DENIED){
+            } else if (grantResults[0] == PackageManager.PERMISSION_DENIED) {
                 if (ActivityCompat.shouldShowRequestPermissionRationale(BaseActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE)) {
                     //Show an explanation to the user *asynchronously*
                     AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -45,7 +46,7 @@ public class BaseActivity extends AppCompatActivity {
                         }
                     });
                     ActivityCompat.requestPermissions(BaseActivity.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, REQUEST_INTERNET);
-                }else{
+                } else {
                     //Never ask again and handle your app without permission.
                 }
             }

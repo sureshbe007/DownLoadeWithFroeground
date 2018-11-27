@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
+import android.widget.Toast;
 
 import com.example.suresh.downloader.R;
 import com.example.suresh.downloader.downloadmanager.database.DownloadModel;
@@ -27,13 +28,17 @@ public class DownloadService extends Service implements ProgressUpdate {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (intent.getExtras() != null) {
-            int filePosition = intent.getIntExtra("FILE_POSITION", -1);
-            String fileUrl = intent.getStringExtra("FILE_URL");
-            DownloadModel downloadModel = (DownloadModel) intent.getSerializableExtra("FILE_MODEL");
-            startForegroundService(filePosition, fileUrl, downloadModel);
-        } else {
-
+        try {
+            if (intent.getExtras() == null) {
+                Toast.makeText(this, "Please wait...", Toast.LENGTH_SHORT).show();
+            } else {
+                int filePosition = intent.getIntExtra("FILE_POSITION", -1);
+                String fileUrl = intent.getStringExtra("FILE_URL");
+                DownloadModel downloadModel = (DownloadModel) intent.getSerializableExtra("FILE_MODEL");
+                startForegroundService(filePosition, fileUrl, downloadModel);
+            }
+        } catch (NullPointerException ex) {
+            ex.printStackTrace();
         }
 
         return START_STICKY;

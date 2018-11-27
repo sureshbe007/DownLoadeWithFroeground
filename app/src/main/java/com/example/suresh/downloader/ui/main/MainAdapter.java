@@ -137,10 +137,6 @@ public class MainAdapter extends RecyclerView.Adapter<MainAdapter.downLoadViewHo
     }
 
 
-    public void setData(int position, DownloadModel downloadModel) {
-        mDownloadModels.set(position, downloadModel);
-    }
-
     @Override
     public int getItemCount() {
         return (null != mDownloadModels ? mDownloadModels.size() : 0);
