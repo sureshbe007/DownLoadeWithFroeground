@@ -22,8 +22,9 @@
             </intent-filter>
         </activity>
         <activity android:name=".ui.base.BaseActivity" />
+
         <service android:name=".service.DownloadService"
-            android:process=":externalProcess"></service>
+            android:process=":externalProcess"/>
     </application>
 
 </manifest>

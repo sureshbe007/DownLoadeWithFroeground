@@ -38,7 +38,7 @@ public class MainActivity extends BaseActivity implements MainMvp {
     RecyclerView downLoadRecycle;
     private MainAdapter downLoadAdapter;
     final String BASE_URL[] = {
-            "https://dl.google.com/android/repository/android-ndk-r18b-darwin-x86_64.zip",
+            "http://www.appsapk.com/downloading/latest/WeChat-6.5.7.apk",
             "https://dl.google.com/android/repository/android-ndk-r18b-windows-x86.zip",
             "https://dl.google.com/android/repository/android-ndk-r18b-darwin-x86_64.zip"};
 
@@ -104,7 +104,7 @@ public class MainActivity extends BaseActivity implements MainMvp {
                 }
 
 
-            }, downloadModelList);
+            }, mDownloadModelList);
 
             downLoadRecycle.setHasFixedSize(true);
             downLoadRecycle.setAdapter(downLoadAdapter);
@@ -129,7 +129,7 @@ public class MainActivity extends BaseActivity implements MainMvp {
                 //UI update here
                 if (intent != null) {
                     final int position = intent.getIntExtra("FILE_POSITION", -1);
-                    final DownloadModel downloadModel = (DownloadModel) intent.getSerializableExtra("FILE_MODEL");
+                    final DownloadModel model = (DownloadModel) intent.getSerializableExtra("FILE_MODEL");
                     if (position != -1) {
 //                                downLoadAdapter.setData(filePosition, downloadModel);
 //                                downLoadAdapter.notifyItemChanged(filePosition);
@@ -137,8 +137,8 @@ public class MainActivity extends BaseActivity implements MainMvp {
                             @Override
                             public void run() {
 //                                mTextView.setText("" + downloadModel.getDownloadedBytes());
-                                mDownloadModelList.set(position,downloadModel);
-                                downLoadAdapter.notifyItemChanged(position, downloadModel);
+                                mDownloadModelList.set(position,model);
+                                downLoadAdapter.notifyItemChanged(position, mDownloadModelList);
                             }
                         });
 

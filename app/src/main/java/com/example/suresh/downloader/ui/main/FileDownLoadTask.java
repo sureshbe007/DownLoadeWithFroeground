@@ -25,7 +25,7 @@ public class FileDownLoadTask {
     }
 
     public static void downLoadStart(final int filePosition, String fileUrl, final DownloadModel downloadModel, final ProgressUpdate progressUpdate) {
-        Log.d("DOWWLOADER2525", " downLoadStart  FileDownLoadTask:  " + ComponentHolder.getInstance().getDbHelper().getDownloadID(fileUrl));
+
         final ProgressUpdate mProgressUpdate = progressUpdate;
         File file = new File(fileUrl);
         String fileFormat = DirectoryManager.getFileExtension(file);
@@ -35,13 +35,11 @@ public class FileDownLoadTask {
                 .setOnStartOrResumeListener(new OnStartOrResumeListener() {
                     @Override
                     public void onStartOrResume() {
-                        Log.d("DOWWLOADER25256565", "OnStartOrResumeListener:: onStartOrResume ");
                     }
                 })
                 .setOnPauseListener(new OnPauseListener() {
                     @Override
                     public void onPause() {
-                        Log.d("DOWWLOADER25256565", "OnStartOrResumeListener:: OnPauseListener ");
                     }
                 })
                 .setOnProgressListener(new OnProgressListener() {
@@ -57,7 +55,6 @@ public class FileDownLoadTask {
                 .setOnCancelListener(new OnCancelListener() {
                     @Override
                     public void onCancel() {
-                        Log.d("DOWWLOADER25256565", "OnStartOrResumeListener:: OnCancelListener ");
                         downloadModel.setDownloadedBytes(0);
                         mProgressUpdate.sendDownLoadProgress(filePosition, downloadModel);
                     }
@@ -66,7 +63,6 @@ public class FileDownLoadTask {
                     @Override
                     public void onDownloadComplete() {
                         progressUpdate.stopDownLoad();
-                        Log.d("DOWWLOADER2525", "downloadPause() Btn  onDownloadComplete ");
                     }
 
                     @Override
