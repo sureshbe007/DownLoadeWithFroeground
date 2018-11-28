@@ -38,7 +38,7 @@ public class MainActivity extends BaseActivity implements MainMvp {
     RecyclerView downLoadRecycle;
     private MainAdapter downLoadAdapter;
     final String BASE_URL[] = {
-            "http://www.appsapk.com/downloading/latest/WeChat-6.5.7.apk",
+            "https://dl.google.com/dl/android/studio/ide-zips/3.2.1.0/android-studio-ide-181.5056338-linux.zip",
             "https://dl.google.com/android/repository/android-ndk-r18b-windows-x86.zip",
             "https://dl.google.com/android/repository/android-ndk-r18b-darwin-x86_64.zip"};
 
@@ -91,14 +91,18 @@ public class MainActivity extends BaseActivity implements MainMvp {
                         case DOWNLOAD_CANCEL:
                             Log.d("DOWWLOADER2525", " downloadCancel Activity   " + downloadModel.getUrl());
                             downloadCancel(fileUrl);
+                            mMainPresenter.getDownloadDetails(BASE_URL);
                             break;
                         case Constant.DOWNLOAD_PAUSE:
                             Log.d("DOWWLOADER2525", " downloadPause Activity   " + downloadModel.getUrl());
                             downloadPause(fileUrl);
                             break;
                         case Constant.DOWNLOAD_RESUME:
-                            Log.d("DOWWLOADER2525", " downloadResume Activity   " + downloadModel.getUrl());
-                            downloadResume(fileUrl);
+                            Intent resume = new Intent(MainActivity.this, DownloadService.class);
+                            resume.putExtra("FILE_POSITION", filePosition);
+                            resume.putExtra("FILE_URL", fileUrl);
+                            resume.putExtra("FILE_MODEL", downloadModel);
+                            startService(resume);
                             break;
                     }
                 }
@@ -129,21 +133,15 @@ public class MainActivity extends BaseActivity implements MainMvp {
                 //UI update here
                 if (intent != null) {
                     final int position = intent.getIntExtra("FILE_POSITION", -1);
-                    final DownloadModel model = (DownloadModel) intent.getSerializableExtra("FILE_MODEL");
+                    final DownloadModel downloadModel = (DownloadModel) intent.getSerializableExtra("FILE_MODEL");
                     if (position != -1) {
-//                                downLoadAdapter.setData(filePosition, downloadModel);
-//                                downLoadAdapter.notifyItemChanged(filePosition);
                         mHandler.post(new Runnable() {
                             @Override
                             public void run() {
-//                                mTextView.setText("" + downloadModel.getDownloadedBytes());
-                                mDownloadModelList.set(position,model);
+                                mDownloadModelList.set(position, downloadModel);
                                 downLoadAdapter.notifyItemChanged(position, mDownloadModelList);
                             }
                         });
-
-
-//
                     }
                 }
             } catch (Exception ex) {

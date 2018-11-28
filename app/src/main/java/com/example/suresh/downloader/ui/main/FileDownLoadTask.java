@@ -20,17 +20,19 @@ import java.io.File;
 
 public class FileDownLoadTask {
 
-    private static int downloadID;
+    private static long latupdate;
     public FileDownLoadTask() {
     }
 
     public static void downLoadStart(final int filePosition, String fileUrl, final DownloadModel downloadModel, final ProgressUpdate progressUpdate) {
+        latupdate = System.currentTimeMillis();
 
-        final ProgressUpdate mProgressUpdate = progressUpdate;
+        Log.d("FILE_OPERATION_CHECK", " 12345   ::::::::: " + filePosition);
+        Log.d("FILE_OPERATION_CHECK", " 67890   ::::::::: " + fileUrl);
         File file = new File(fileUrl);
         String fileFormat = DirectoryManager.getFileExtension(file);
         String filePath = DirectoryManager.createDirectory();
-        downloadID = PRDownloader.download(fileUrl, filePath, fileFormat)
+        PRDownloader.download(fileUrl, filePath, fileFormat)
                 .build()
                 .setOnStartOrResumeListener(new OnStartOrResumeListener() {
                     @Override
@@ -40,34 +42,43 @@ public class FileDownLoadTask {
                 .setOnPauseListener(new OnPauseListener() {
                     @Override
                     public void onPause() {
+                        Log.d("FILE_OPERATION_CHECK", "setOnPauseListener         ");
+                        progressUpdate.stopDownLoad();
                     }
                 })
                 .setOnProgressListener(new OnProgressListener() {
                     @Override
                     public void onProgress(Progress progress) {
-                        downloadModel.setDownloadedBytes(progress.currentBytes);
-                        downloadModel.setTotalBytes(progress.totalBytes);
-                        mProgressUpdate.sendDownLoadProgress(filePosition, downloadModel);
-//                        Log.d("DOWWLOADER25253535", "OnProgressListener:: Progress " + downloadID);
+                        if (System.currentTimeMillis() > latupdate + 2000) {
+                            downloadModel.setDownloadedBytes(progress.currentBytes);
+                            downloadModel.setTotalBytes(progress.totalBytes);
+                            progressUpdate.sendDownLoadProgress(filePosition, downloadModel);
+                            latupdate = System.currentTimeMillis();
+                        }
 
                     }
                 })
                 .setOnCancelListener(new OnCancelListener() {
                     @Override
                     public void onCancel() {
+                        Log.d("FILE_OPERATION_CHECK", "setOnCancelListener         ");
                         downloadModel.setDownloadedBytes(0);
-                        mProgressUpdate.sendDownLoadProgress(filePosition, downloadModel);
+                        downloadModel.setTotalBytes(0);
+                        progressUpdate.sendDownLoadProgress(filePosition, downloadModel);
+                        progressUpdate.stopDownLoad();
+
                     }
                 })
                 .start(new OnDownloadListener() {
                     @Override
                     public void onDownloadComplete() {
+                        Log.d("FILE_OPERATION_CHECK", "OnDownloadListener         ");
                         progressUpdate.stopDownLoad();
                     }
 
                     @Override
                     public void onError(Error error) {
-                        Log.d("DOWWLOADER2525", "downloadPause() Btn  onError ");
+                        progressUpdate.stopDownLoad();
                     }
 
                 });
@@ -75,9 +86,8 @@ public class FileDownLoadTask {
     }
 
     public static void downloadPause(String fileUrl) {
-        Log.d("DOWWLOADER25256565", "FileDownLoadTask downloadPause" + fileUrl);
         long downLoadId = ComponentHolder.getInstance().getDbHelper().getDownloadID(fileUrl);
-        Log.d("DOWWLOADER25256565", "FileDownLoadTask downloadPause" + downLoadId);
+        Log.d("FILE_OPERATION_CHECK", "downloadPause         " + downLoadId);
         if (Status.RUNNING == PRDownloader.getStatus((int) downLoadId)) {
             PRDownloader.pause((int) downLoadId);
             return;
@@ -85,22 +95,24 @@ public class FileDownLoadTask {
     }
 
     public static void downloadResume(String fileUrl) {
-
-        Log.d("DOWWLOADER25256565", "FileDownLoadTask downloadResume" + fileUrl);
         long downLoadId = ComponentHolder.getInstance().getDbHelper().getDownloadID(fileUrl);
-        Log.d("DOWWLOADER25256565", "FileDownLoadTask downloadResume" + downLoadId);
+        Log.d("FILE_OPERATION_CHECK", "downloadResume         " + downLoadId);
         if (Status.PAUSED == PRDownloader.getStatus((int) downLoadId)) {
             PRDownloader.resume((int) downLoadId);
             return;
         }
+
     }
 
     public static void downloadCancel(String fileUrl) {
-        Log.d("DOWWLOADER25256565", "FileDownLoadTask downloadCancel" + fileUrl);
         long downLoadId = ComponentHolder.getInstance().getDbHelper().getDownloadID(fileUrl);
-        Log.d("DOWWLOADER25256565", "FileDownLoadTask  downloadCancel" + downLoadId);
-        if (Status.RUNNING == PRDownloader.getStatus((int) downLoadId)) {
+        Log.d("FILE_OPERATION_CHECK", "downloadCancel         " + downLoadId);
+        Log.d("FILE_OPERATION_CHECK", "downloadCancel         " + PRDownloader.getStatus((int) downLoadId));
+        if (Status.RUNNING == PRDownloader.getStatus((int) downLoadId) || Status.PAUSED == PRDownloader.getStatus((int) downLoadId)) {
             PRDownloader.cancel((int) downLoadId);
+            return;
+        } else if (Status.UNKNOWN == PRDownloader.getStatus((int) downLoadId)) {
+            ComponentHolder.getInstance().getDbHelper().remove((int)downLoadId);
             return;
         }
     }

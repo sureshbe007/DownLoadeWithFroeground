@@ -19,8 +19,9 @@ import com.example.suresh.downloader.ui.main.MainActivity;
 import com.example.suresh.downloader.utils.Constant;
 
 import static com.example.suresh.downloader.ui.main.FileDownLoadTask.downLoadStart;
+import static com.example.suresh.downloader.utils.Constant.INTENT_PROGRESS_UPDATE;
 
-public class DownloadService extends Service implements ProgressUpdate {
+public class DownloadService extends Service  {
     @Override
     public void onCreate() {
         super.onCreate();
@@ -41,7 +42,7 @@ public class DownloadService extends Service implements ProgressUpdate {
             ex.printStackTrace();
         }
 
-        return START_STICKY;
+        return START_NOT_STICKY;
     }
 
 
@@ -56,7 +57,7 @@ public class DownloadService extends Service implements ProgressUpdate {
         super.onDestroy();
     }
 
-    private void startForegroundService(int filePosition, String fileUrl, DownloadModel downloadModel) {
+    private void startForegroundService(final int filePosition, final String fileUrl, final DownloadModel downloadModel) {
         String NOTIFICATION_CHANNEL_ID = "100";
         Intent notificationIntent = new Intent(this, MainActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
@@ -75,22 +76,31 @@ public class DownloadService extends Service implements ProgressUpdate {
             notificationManager.createNotificationChannel(channel);
         }
         startForeground(1, notification);
-        downLoadStart(filePosition, fileUrl, downloadModel, this);
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                downLoadStart(filePosition, fileUrl, downloadModel, new ProgressUpdate() {
+                    @Override
+                    public void sendDownLoadProgress(int position, DownloadModel downloadModel) {
+                        Intent intent = new Intent(INTENT_PROGRESS_UPDATE);
+                        intent.putExtra("FILE_POSITION", position);
+                        intent.putExtra("FILE_MODEL", downloadModel);
+                        sendBroadcast(intent);
+
+                    }
+
+                    @Override
+                    public void stopDownLoad() {
+                        stopForeground(true);
+                        stopSelf();
+                    }
+                });
+            }
+        };
+        Thread thread = new Thread(runnable);
+        thread.start();
     }
 
-    @Override
-    public void sendDownLoadProgress(int position, DownloadModel downloadModel) {
-        Intent intent = new Intent(Constant.INTENT_PROGRESS_UPDATE);
-        intent.putExtra("FILE_POSITION", position);
-        intent.putExtra("FILE_MODEL", downloadModel);
-        sendBroadcast(intent);
 
-    }
-
-    @Override
-    public void stopDownLoad() {
-        stopForeground(true);
-        stopSelf();
-    }
     }
 

@@ -13,9 +13,11 @@ import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import com.example.suresh.downloader.R;
+import com.example.suresh.downloader.downloadmanager.PRDownloader;
+import com.example.suresh.downloader.downloadmanager.Status;
 import com.example.suresh.downloader.downloadmanager.database.DownloadModel;
+import com.example.suresh.downloader.downloadmanager.internal.ComponentHolder;
 import com.example.suresh.downloader.service.DownloadService;
 import com.example.suresh.downloader.ui.callback.DownLoadStatus;
 import com.example.suresh.downloader.utils.DirectoryManager;
@@ -57,79 +59,94 @@ public class MainAdapter extends RecyclerView.Adapter<MainAdapter.downLoadViewHo
     public void onBindViewHolder(@NonNull final downLoadViewHolder downLoadViewHolders, final int position) {
 
         try {
+            final DownloadModel model = mDownloadModels.get(position);
+
+            downLoadViewHolders.buttonStart.setTag(model.getUrl());
+            downLoadViewHolders.buttonPause.setTag(model.getUrl());
+            downLoadViewHolders.buttonResume.setTag(model.getUrl());
+            downLoadViewHolders.buttonCancel.setTag(model.getUrl());
+            downLoadViewHolders.progressBar.getIndeterminateDrawable().setColorFilter(Color.BLUE, android.graphics.PorterDuff.Mode.SRC_IN);
+
+//            Hide and show the button
+            long downLoadId = ComponentHolder.getInstance().getDbHelper().getDownloadID(model.getUrl());
+            if (model.getDownloadedBytes() == 0 && model.getTotalBytes() == 0) {
+                Log.d("BUTTON_CHECK", " ::::::::: ALL VALUE )");
+                downLoadViewHolders.buttonResume.setVisibility(View.GONE);
+                downLoadViewHolders.buttonPause.setVisibility(View.GONE);
+                downLoadViewHolders.buttonStart.setVisibility(View.VISIBLE);
+            } else if (Status.PAUSED == PRDownloader.getStatus((int) downLoadId) && model.getDownloadedBytes() > 0 && model.getTotalBytes() > 0) {
+                Log.d("BUTTON_CHECK", " ::::::::: PAUSED )");
+                downLoadViewHolders.buttonResume.setVisibility(View.VISIBLE);
+                downLoadViewHolders.buttonCancel.setVisibility(View.VISIBLE);
+                downLoadViewHolders.buttonPause.setVisibility(View.GONE);
+                downLoadViewHolders.buttonStart.setVisibility(View.GONE);
+            } else if (Status.RUNNING == PRDownloader.getStatus((int) downLoadId) && model.getDownloadedBytes() > 0 && model.getTotalBytes() > 0) {
+                Log.d("BUTTON_CHECK", " ::::::::: RUNNING )");
+                downLoadViewHolders.buttonPause.setVisibility(View.VISIBLE);
+                downLoadViewHolders.buttonCancel.setVisibility(View.VISIBLE);
+                downLoadViewHolders.buttonStart.setVisibility(View.GONE);
+            } else if (Status.UNKNOWN == PRDownloader.getStatus((int) downLoadId) && model.getDownloadedBytes() > 0 && model.getTotalBytes() > 0) {
+                downLoadViewHolders.buttonCancel.setVisibility(View.VISIBLE);
+                downLoadViewHolders.buttonResume.setVisibility(View.VISIBLE);
+                downLoadViewHolders.buttonPause.setVisibility(View.GONE);
+                downLoadViewHolders.buttonStart.setVisibility(View.GONE);
+            }
+            Log.d("BUTTON_CHECK", " ::::::::: OUT )" + PRDownloader.getStatus((int) downLoadId));
+            if (model.getDownloadedBytes() != 0 && model.getTotalBytes() != 0) {
+                downLoadViewHolders.progressBar.setProgress((int) (model.getDownloadedBytes() * 100 / model.getTotalBytes()));
+                downLoadViewHolders.textProgressStatus.setText(DirectoryManager.getProgressDisplayLine(model.getDownloadedBytes(), model.getTotalBytes()));
+                downLoadViewHolders.progressBar.setIndeterminate(false);
+            } else {
+                downLoadViewHolders.progressBar.setProgress(0);
+                downLoadViewHolders.textProgressStatus.setText("");
+            }
 
 
-                      final DownloadModel model = mDownloadModels.get(position);
-                      downLoadViewHolders.buttonStart.setTag(model.getUrl());
-                      downLoadViewHolders.buttonPause.setTag(model.getUrl());
-                      downLoadViewHolders.buttonResume.setTag(model.getUrl());
-                      downLoadViewHolders.buttonCancel.setTag(model.getUrl());
+            downLoadViewHolders.textFileName.setText("File Name : " + model.getFileName());
 
-                      downLoadViewHolders.textPosition.setText(String.valueOf(position + 1));
-                      downLoadViewHolders.textFileName.setText("File Name : " + model.getFileName());
-                      downLoadViewHolders.progressBar.getIndeterminateDrawable().setColorFilter(Color.BLUE, android.graphics.PorterDuff.Mode.SRC_IN);
+            downLoadViewHolders.buttonStart.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    try {
+                        if (isMyServiceRunning(DownloadService.class, mContext)) {
+                            Toast.makeText(mContext, "Please wait download is going on", Toast.LENGTH_SHORT).show();
+                        } else {
+                            downLoadViewHolders.buttonStart.setVisibility(View.GONE);
+                            downLoadViewHolders.buttonCancel.setVisibility(View.VISIBLE);
+                            downLoadViewHolders.buttonPause.setVisibility(View.VISIBLE);
+                            mDownLoadStatus.sendDownLodStatus(DOWNLOAD_START, position, downLoadViewHolders.buttonStart.getTag().toString(), model);
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
 
-                      if (model.getDownloadedBytes() != 0) {
+                }
+            });
 
-                          Log.d("DOWWLOADER25254545", "  MainAdapter IF   " +"getDownloadedBytes:::    "+ model.getDownloadedBytes()+"getTotalBytes ::::  "+model.getTotalBytes());
-                          downLoadViewHolders.progressBar.setProgress((int) (model.getDownloadedBytes() * 100 / model.getTotalBytes()));
-                          downLoadViewHolders.textProgressStatus.setText(DirectoryManager.getProgressDisplayLine(model.getDownloadedBytes(), model.getTotalBytes()));
-                          downLoadViewHolders.progressBar.setIndeterminate(false);
-                      } else {
-                          Log.d("DOWWLOADER25254545", " MainAdapter  ELSE   " + model.getDownloadedBytes());
-
-                          downLoadViewHolders.progressBar.setProgress(0);
-                          downLoadViewHolders.textProgressStatus.setText("");
-                      }
-
-                      downLoadViewHolders.buttonStart.setOnClickListener(new View.OnClickListener() {
-                          @Override
-                          public void onClick(View view) {
-                              try {
-                                  if(isMyServiceRunning(DownloadService.class,mContext))
-                                  {
-                                      Toast.makeText(mContext,"Please wait download is going on",Toast.LENGTH_SHORT).show();
-                                  }
-                                  else {
-                                      Toast.makeText(mContext, "  START ", Toast.LENGTH_SHORT).show();
-                                      downLoadViewHolders.buttonStart.setVisibility(View.INVISIBLE);
-                                      downLoadViewHolders.buttonCancel.setVisibility(View.VISIBLE);
-                                      mDownLoadStatus.sendDownLodStatus(DOWNLOAD_START, position, downLoadViewHolders.buttonStart.getTag().toString(), model);
-                                  }
-                              } catch (Exception e) {
-                                  e.printStackTrace();
-                              }
-                          }
-                      });
-
-                      downLoadViewHolders.buttonCancel.setOnClickListener(new View.OnClickListener() {
-                          @Override
-                          public void onClick(View v) {
-                              Toast.makeText(mContext, "  CANCEL " + downLoadViewHolders.buttonPause.getTag(), Toast.LENGTH_SHORT).show();
-                              downLoadViewHolders.buttonStart.setVisibility(View.VISIBLE);
-                              downLoadViewHolders.buttonCancel.setVisibility(View.INVISIBLE);
-                              mDownLoadStatus.sendDownLodStatus(DOWNLOAD_CANCEL, position, downLoadViewHolders.buttonCancel.getTag().toString(), model);
-                          }
-                      });
-                      downLoadViewHolders.buttonPause.setOnClickListener(new View.OnClickListener() {
-                          @Override
-                          public void onClick(View view) {
-                              Toast.makeText(mContext, "  PAUSE " + downLoadViewHolders.buttonPause.getTag(), Toast.LENGTH_SHORT).show();
-                              downLoadViewHolders.buttonResume.setVisibility(View.VISIBLE);
-                              downLoadViewHolders.buttonPause.setVisibility(View.INVISIBLE);
-                              mDownLoadStatus.sendDownLodStatus(DOWNLOAD_PAUSE, position, downLoadViewHolders.buttonPause.getTag().toString(), model);
-                          }
-                      });
-                      downLoadViewHolders.buttonResume.setOnClickListener(new View.OnClickListener() {
-                          @Override
-                          public void onClick(View v) {
-                              Toast.makeText(mContext, "  RESUME " + downLoadViewHolders.buttonResume.getTag(), Toast.LENGTH_SHORT).show();
-                              downLoadViewHolders.buttonResume.setVisibility(View.INVISIBLE);
-                              downLoadViewHolders.buttonPause.setVisibility(View.VISIBLE);
-                              mDownLoadStatus.sendDownLodStatus(DOWNLOAD_RESUME, position, downLoadViewHolders.buttonResume.getTag().toString(), model);
-                          }
-                      });
-
+            downLoadViewHolders.buttonCancel.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    downLoadViewHolders.buttonCancel.setVisibility(View.GONE);
+                    downLoadViewHolders.buttonStart.setVisibility(View.VISIBLE);
+                    mDownLoadStatus.sendDownLodStatus(DOWNLOAD_CANCEL, position, downLoadViewHolders.buttonCancel.getTag().toString(), model);
+                }
+            });
+            downLoadViewHolders.buttonPause.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    downLoadViewHolders.buttonPause.setVisibility(View.GONE);
+                    downLoadViewHolders.buttonResume.setVisibility(View.VISIBLE);
+                    mDownLoadStatus.sendDownLodStatus(DOWNLOAD_PAUSE, position, downLoadViewHolders.buttonPause.getTag().toString(), model);
+                }
+            });
+            downLoadViewHolders.buttonResume.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    downLoadViewHolders.buttonResume.setVisibility(View.GONE);
+                    downLoadViewHolders.buttonPause.setVisibility(View.VISIBLE);
+                    mDownLoadStatus.sendDownLodStatus(DOWNLOAD_RESUME, position, downLoadViewHolders.buttonResume.getTag().toString(), model);
+                }
+            });
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -142,12 +159,11 @@ public class MainAdapter extends RecyclerView.Adapter<MainAdapter.downLoadViewHo
         return (null != mDownloadModels ? mDownloadModels.size() : 0);
     }
 
-
     public class downLoadViewHolder extends RecyclerView.ViewHolder {
 
         @BindView(R.id.card_view_left)
         CardView cardView;
-        @BindView(R.id.text_file_name)
+        @BindView(R.id.text_file_naame)
         TextView textFileName;
 
         @BindView(R.id.text_position)
